@@ -1,0 +1,9 @@
+README.md
+setup.py
+sqlhandle/__init__.py
+sqlhandle/sqlhandle.py
+sqlhandle/version.py
+sqlhandle.egg-info/PKG-INFO
+sqlhandle.egg-info/SOURCES.txt
+sqlhandle.egg-info/dependency_links.txt
+sqlhandle.egg-info/top_level.txt
