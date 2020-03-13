@@ -12,7 +12,7 @@ if sys.version_info[0] < 3:
 setup(
 	name="sqlhandle",
 	version=open('sqlhandle/version.py').read(),
-	description=('My short description.'),
+	description=('Simple sqlhandle for python'),
 	url='https://github.com/breath2live/sqlhandle',
 
 	author='Sam Classix',
@@ -20,8 +20,9 @@ setup(
 	license=open('LICENSE').read(),
 
 	long_description=open('README.md').read(),
-	packages=find_packages(),
+	#packages=find_packages(),
+	packages=['sqlhandle'],
 	include_package_data=True,
 
-	#install_requires=['numpy'],
+	install_requires=['numpy', 'pandas', 'pymysql']
 )
