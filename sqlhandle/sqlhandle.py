@@ -41,6 +41,10 @@ class sqlhandle():
 	__session    = None
 	__connection = None
 
+	#################
+	### INTERNALs ###
+	#################
+
 	# Debug method
 	def __debug(self, str):
 		if self.__debugEN == 1 :
@@ -95,6 +99,9 @@ class sqlhandle():
 
 	# __exec - executes commands
 	def __exec(self, query, values):
+		if self.isConnected() == False:
+			self.__debug01("reconnecting...")
+			self.connect()
 		try:
 			req = "{} {} ;".format(query, values)
 			self.__debug01("__exec: {}".format(req))
@@ -126,6 +133,10 @@ class sqlhandle():
 			cnt += 1
 		return values
 
+	################
+	###  BASICs  ###
+	################
+
 	# connect
 	def connect(self):
 		self.__open()
@@ -140,15 +151,16 @@ class sqlhandle():
 	def disconnect(self):
 		self.__close()
 
+	################
+	### DATABASE ###
+	################
+
 	# check if db is available
 	def dbAvailable(self, db, force=0):
+		if force == 1 :
+			self.__exec("CREATE DATABASE", db)
 		res = self.__exec("SHOW DATABASES LIKE", "'{}'".format(db))
-		if res == 0 :
-			if force == 1 :
-				self.__exec("CREATE DATABASE", db)
-				self.__debug("dbAvailable: <{}> created".format(db))
-				res = 1
-		self.__debug("dbAvailable: <{}> {}".format(db, res))
+		self.__debug("dbAvailable: <{}> f{} {}".format(db, force, res))
 		return res
 	# END dbAvailable
 
@@ -164,28 +176,29 @@ class sqlhandle():
 		if force == 1 :
 			self.__exec("DROP DATABASE", db)
 		res = self.__exec("CREATE DATABASE", db)
-		self.__debug("dbCreate: <{}> {}".format(db, res))
+		self.__debug("dbCreate: <{}> f{} {}".format(db, force, res))
 		return res
 
-	# list db
-	def dbList(self):
-		try:
-			databases = ("show databases")
-			cursor.execute(databases)
-			for (databases) in cursor:
-				print (databases[0])
-		except pymysql.Error as e:
-			print(e)
-			return e
+	# list db --- BUG
+	#def dbList(self):
+	#	try:
+	#		databases = ("show databases")
+	#		self.cursor.execute(databases)
+	#		for (databases) in cursor:
+	#			print (databases[0])
+	#	except pymysql.Error as e:
+	#		print(e)
+	#		return e
 
 	# db use
 	def dbUse(self, db, force=0):
 		if force == 1 :
-			self.dbCreate(db)
+			self.__exec("CREATE DATABASE", db)
 		elif force == 2:
-			self.dbCreate(db, force=1)
+			self.__exec("DROP DATABASE", db)
+			self.__exec("CREATE DATABASE", db)
 		res = self.__exec("USE", db)
-		self.__debug("dbUse: <{}> {}".format(db, res))
+		self.__debug("dbUse: <{}> f{} {}".format(db, force, res))
 		return res
 
 
