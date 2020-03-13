@@ -139,16 +139,27 @@ class sqlhandle():
 
 	# connect
 	def connect(self):
+		"""
+		Connects sqlhandle
+		"""
 		self.__open()
 
 	# isconnected
 	def isConnected(self):
+		"""
+		Checks if the sqlhandle is connected.
+		Connected: True
+		Desconnected: False
+		"""
 		if hasattr(self.__session, 'execute'):
 			return 1
 		return 0
 
 	# disconnect
 	def disconnect(self):
+		"""
+		Disonnects sqlhandle
+		"""
 		self.__close()
 
 	################
@@ -157,6 +168,11 @@ class sqlhandle():
 
 	# check if db is available
 	def dbAvailable(self, db, force=0):
+		"""
+		Checks if Database is available.
+		force=0, Just check (default)
+		force=1, Create if not exists
+		"""
 		if force == 1 :
 			self.__exec("CREATE DATABASE", db)
 		res = self.__exec("SHOW DATABASES LIKE", "'{}'".format(db))
@@ -166,6 +182,9 @@ class sqlhandle():
 
 	# drop database
 	def dbDrop(self, db):
+		"""
+		Drops a Database
+		"""
 		res = self.__exec("DROP DATABASE", db)
 		self.__debug("dbDrop: <{}> {}".format(db, res))
 		return res
@@ -173,6 +192,11 @@ class sqlhandle():
 
 	# create db
 	def dbCreate(self, db, force=0):
+		"""
+		Creats a Database
+		force=0, Just create (default)
+		force=1, Drop and recreate
+		"""
 		if force == 1 :
 			self.__exec("DROP DATABASE", db)
 		res = self.__exec("CREATE DATABASE", db)
@@ -192,6 +216,12 @@ class sqlhandle():
 
 	# db use
 	def dbUse(self, db, force=0):
+		"""
+		Uses a Database
+		force=0, Just use (default)
+		force=1, Create if not exists
+		force=2, Drop and recreate
+		"""
 		if force == 1 :
 			self.__exec("CREATE DATABASE", db)
 		elif force == 2:
@@ -200,17 +230,28 @@ class sqlhandle():
 		res = self.__exec("USE", db)
 		self.__debug("dbUse: <{}> f{} {}".format(db, force, res))
 		return res
-
+	# END dbUse
 
 	# table available?
-	def tblAvailable(self, tbl, cmd="ID INT NOT NULL AUTO_INCREMENT,PRIMARY KEY (ID)", force=0):
+	def tblAvailable(self, tbl, *cmd, force=0):
+		"""
+		Checks if a Table is available
+		*cmd, describe Table if you want to force one
+		default - "ID INT NOT NULL AUTO_INCREMENT, PRIMARY KEY (ID)"
+		force=0, Just Check (default)
+		force=1, Create Table if not exists
+		"""
 		res = self.__exec("SHOW TABLES LIKE", """ "{}" """.format(tbl))
 		if res == 0 :
-			self.__debug("tblAvailable: <{}> {}".format(tbl, res))
 			if force == 1 :
-				self.__exec( "CREATE TABLE {} ({});".format(tbl, cmd))
-				self.__debug("tblAvailable: <{}> created".format(tbl))
+				if len(cmd) != 0 :
+					values = self.__modTubs(*cmd)
+				else:
+					values = "ID INT NOT NULL AUTO_INCREMENT, PRIMARY KEY (ID)"
+				self.__exec("CREATE TABLE", "{} ({})".format(tbl, values))
+				self.__debug("tblAvailable: <{}> 1".format(tbl))
 				return 1
+			self.__debug("tblAvailable: <{}> {}".format(tbl, res))
 			return 0
 		else:
 			self.__debug("tblAvailable: <{}> {}".format(tbl, res))
@@ -218,25 +259,28 @@ class sqlhandle():
 
 	# create table
 	def tblCreate(self, tbl, *cmd, force=0):
+		"""
+		Creates a Table.
+		*cmd, describe Table for creation
+		default - "ID INT NOT NULL AUTO_INCREMENT, PRIMARY KEY (ID)"
+		force=0, Just Create (default)
+		force=1, Drop and recreate
+		"""
 		if len(cmd) != 0 :
 			values = self.__modTubs(*cmd)
 		else:
-			values = "ID INT NOT NULL AUTO_INCREMENT,PRIMARY KEY (ID)"
+			values = "ID INT NOT NULL AUTO_INCREMENT, PRIMARY KEY (ID)"
 		if force == 1 :
-			self.tblDrop(tbl)
+			self.__exec("DROP TABLE", tbl)
 		res = self.__exec( "CREATE TABLE",  "{} ({})".format(tbl, values))
 		self.__debug("tblCreate: <{}> {}".format(tbl, res))
 		return res
 
-
-
 	# table drop
-	def tblDrop(self, tbl):
-		res = self.__exec("DROP TABLE", tbl)
-		self.__debug("tblDrop: <{}> {}".format(tbl, res))
-		return res
-
-	def tblDropAdv(self, *tbl):
+	def tblDrop(self, *tbl):
+		"""
+		Drops a Table(s)
+		"""
 		values = self.__modTubs(*tbl)
 		res = self.__exec("DROP TABLE", values)
 		self.__debug("tblDrop: <{}> {}".format(values, res))
@@ -244,33 +288,15 @@ class sqlhandle():
 
 	# alter table
 	def tblAlter(self, tbl, *args):
+		"""
+		Alters Table
+		"""
 		values = self.__modTubs(*args)
 		res = self.__exec("ALTER TABLE", "{} {}".format(tbl, values))
 		self.__debug("tblAlter: <{}> {}".format(tbl, res))
 		return res
 
 	# select
-	def selectOld(self, select, tbl, cmd=None):
-		res=self.__exec( "SELECT", "{} FROM {} {}".format(select, tbl, cmd))
-
-		print(self.__session.rowcount)
-		print(self.__session.description)
-
-		number_rows = self.__session.rowcount
-		if self.__session.description is None :
-			self.__debug("select: <{}> {}".format(tbl, res))
-			return res
-		number_columns = len(self.__session.description)
-		if number_rows >= 1 and number_columns > 1:
-			res = [item for item in self.__session.fetchall()]
-		else:
-			res = [item[0] for item in self.__session.fetchall()]
-
-		self.__debug("select: <{}> {}".format(tbl, res))
-		return res
-		# select Name from Summary union select Name from Customer;
-
-
 	def select(self, select, tbl, *cmd):
 		values = ""
 		header = []
