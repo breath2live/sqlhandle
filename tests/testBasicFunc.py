@@ -14,6 +14,7 @@ else:
 
 
 # setDebug level=1 to True
+sql.setDebug(level=0, value=True)
 sql.setDebug(level=1, value=True)
 
 # disconnect
@@ -21,3 +22,6 @@ sql.disconnect()
 
 # connect agian
 sql.connect()
+
+# execute command
+sql.execute("CREATE DATABASE", "HelloWorld")

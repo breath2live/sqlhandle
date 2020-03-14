@@ -46,6 +46,10 @@ sql.tblDrop("table01", "newTab")
 sql.tblAlter("tbl", "ADD col01 INT")
 
 
+# insert INTO
+sql.tblInsert("tbl", "ID, UID", "1, 2", "3, 4")
+
+
 # drop db, clean up
 #sql.dbDrop("myDatabase")
 

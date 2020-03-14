@@ -8,6 +8,8 @@ class modArray():
 	# [ 	[a1, a2],				[	[a1, b1, c1],
 	#		[b1, b2],	---> 			[a2, b2, c2] ]
 	#		[c1, c2] ]
+
+	# new solution: -> np.transpose(myArray)
 	def flip(self, arr):
 		newarr = []
 		for item_y in range(0, len(arr[0])) :
@@ -103,7 +105,7 @@ class sqlhandle():
 			self.__debug01("reconnecting...")
 			self.connect()
 		try:
-			req = "{} {} ;".format(query, values)
+			req = "{} {};".format(query, values)
 			self.__debug01("__exec: {}".format(req))
 			return self.__session.execute(req)
 		except pymysql.Error as e:
@@ -113,6 +115,9 @@ class sqlhandle():
 
 	# __modTubs
 	def __modTubs(self, *args):
+		"""
+		*args -> str( "a0, a1, a2, ..., an" )
+		"""
 		values = ""
 		cnt = 1
 		for item in args :
@@ -124,6 +129,9 @@ class sqlhandle():
 
 	# __modTubs
 	def __modTubsBrcks(self, *args):
+		"""
+		*args -> str( "(a0), (a1), (a2), (...), (an)" )
+		"""
 		values = ""
 		cnt = 1
 		for item in args :
@@ -161,6 +169,35 @@ class sqlhandle():
 		Disonnects sqlhandle
 		"""
 		self.__close()
+
+	# execute
+	def execute(self, *args):
+		"""
+		Execute sql command line
+		e.g. -> ("CREATE DATABASE", "myDb")
+		returns the length of array
+		"""
+		values=''
+		header = []
+		for item in args:
+			values += ' ' + item
+		res = self.__exec(values, '')
+		number_rows = self.__session.rowcount
+		if self.__session.rowcount == 0 :
+			self.__debug("select: <{}> {}".format(tbl, res))
+			return res
+		number_columns = len(self.__session.description)
+		for item in self.__session.description:
+			header.append(item[0])
+		res = [header]
+		for cnt in range(0,number_rows):
+			item_x = []
+			for x in self.__session.fetchone():
+				item_x.append(x)
+			res.append(item_x)
+		self.__debug("execute: {}".format(len(res)))
+		return res
+
 
 	################
 	### DATABASE ###
@@ -232,6 +269,11 @@ class sqlhandle():
 		return res
 	# END dbUse
 
+
+	################
+	### DATABASE ###
+	################
+
 	# table available?
 	def tblAvailable(self, tbl, *cmd, force=0):
 		"""
@@ -296,8 +338,15 @@ class sqlhandle():
 		self.__debug("tblAlter: <{}> {}".format(tbl, res))
 		return res
 
-	# select
+	# select DEV STAGE
 	def select(self, select, tbl, *cmd):
+		"""
+		Dev. Stage
+		Selects from table
+		e.g.
+		select("Columns", "table", "conditions")
+		SELECT {} FROM {} ... {WHERE ...}
+		"""
 		values = ""
 		header = []
 		for item in cmd:
@@ -320,9 +369,12 @@ class sqlhandle():
 		return res
 		# select Name from Summary union select Name from Customer;
 
-
 	# INSERT
 	def tblInsert(self, tbl, col, *args):
+		"""
+		Inserts row(s) into table
+		e.g. tblInsert("tbl", "ID, UID", "1, 2", "3, 4")
+		"""
 		values = self.__modTubsBrcks(*args)
 		res = self.__exec("INSERT INTO", "{} ({}) VALUES {}".format(tbl, col, values))
 		self.__connection.commit()
@@ -333,17 +385,17 @@ class sqlhandle():
 		# - 1st Colums NO ""
 		# - 2st values convert to -> ''
 
-
-	#	[ 	[h1, h2, h3],
-	#		[v1, v2, v3],
-	#		[v1, v2, v3],
-	#		...
-	#	]
+	# tblInsertArray
 	def tblInsertArray(self, tbl, array, dtype=0):
-		arr = array.copy()
+		"""
+		Inserts headful array to table. Head at index=0
+		dtype=0, No dtype of head included in array (default)
+		dtype=1, The dtype is included in array -> pop(dtype)
+		"""
+		arr = np.array(array.copy())
 		col = self.__modTubs(*arr[0])
 		if dtype == 1 :
-			arr.pop(1)
+			arr = np.delete(arr, 1, 0)
 		values = ''
 		cnt_y = 1
 		for item_y in range(0, len(arr)-1):
@@ -363,55 +415,43 @@ class sqlhandle():
 		self.__debug("tblInsertArray: <{}> {}".format(tbl, res))
 		return res
 
-
-	# tblCreateFromArrayH
-	# [ 	[h1, h2, h3, ...],
-	#		[d1, d2, d3, ...]
-	# ]
-	def tblCreateFromArrayH(self, tbl, arr, force=0):
-		values = 'ID INT NOT NULL AUTO_INCREMENT,PRIMARY KEY (ID), '
+	# tblCreateFromArray
+	def tblCreateFromArray(self, tbl, array, force=0, axis=0, data=0):
+		"""
+		Creates a Table form Array with head and dtype, data will be ignored
+		force=0, Just Create (default)
+		force=1, Drop and recreate
+		axis=0, Head and dtype are in Rows (default)
+		axis=1, Head and dtype are in Columns
+		data=0, Ignore Data in Array (default)
+		data=1, Ignore Data in Array
+		"""
+		arr = np.array(array[:2])
+		values = ''
 		cnt = 1
-		for x in range(0,len(arr[0])):
-			values += "{} {}".format(arr[0][x], arr[1][x])
-			if cnt != len(arr[0]):
-				values += ", "
-			cnt += 1
+		if axis == 0:
+			for x in range(0,len(arr[0])):
+				values += "{} {}".format(arr[0][x], arr[1][x])
+				if cnt != len(arr[0]):
+					values += ", "
+				cnt += 1
+		else:
+			for x in range(0,len(arr)):
+				values += "{} {}".format(arr[x][0], arr[x][1])
+				if cnt != len(arr):
+					values += ", "
+				cnt += 1
 		if force == 1 :
 			self.tblDrop(tbl)
 		res = self.__exec( "CREATE TABLE",  "{} ({})".format(tbl, values))
+		if data == 1:
+			res = self.tblInsertArray(tbl, array, dtype=1)
 		self.__debug("tblCreateFromArray: <{}> {}".format(tbl, res))
 		return res
-	# END tblCreateFromArrayH
+	# END tblCreateFromArray
 
-	# tblCreateFromArrayV
-	# [ [h1, d1],
-	# 	[h2, d2],
-	#	...
-	# ]
-	#
-	def tblCreateFromArrayV(self, tbl, arr, force=0):
-		values = 'ID INT NOT NULL AUTO_INCREMENT, PRIMARY KEY (ID), '
-		cnt = 1
-		for x in range(0,len(arr)):
-			values += "{} {}".format(arr[x][0], arr[x][1])
-			if cnt != len(arr):
-				values += ", "
-			cnt += 1
-		if force == 1 :
-			self.tblDrop(tbl)
-		res = self.__exec( "CREATE TABLE",  "{} ({})".format(tbl, values))
-		self.__debug("tblCreateFromArray: <{}> {}".format(tbl, res))
-		return res
-	# END tblCreateFromArrayV
 
-	# exec
-	def exec(self, *args, list=0):
-		values=''
-		for item in args:
-			values += ' ' + item
-		res = self.__exec(values, '')
-		self.__debug("exec: {}".format(res))
-		return res
+	# add more features
 	# def update
 	# update Summary set Last='Ting' where Last='jung';
 	# tbl, change, condi
