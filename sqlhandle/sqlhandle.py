@@ -249,12 +249,12 @@ class sqlhandle():
 				else:
 					values = "ID INT NOT NULL AUTO_INCREMENT, PRIMARY KEY (ID)"
 				self.__exec("CREATE TABLE", "{} ({})".format(tbl, values))
-				self.__debug("tblAvailable: <{}> 1".format(tbl))
+				self.__debug("tblAvailable: <{}> f{} 1".format(tbl, force))
 				return 1
-			self.__debug("tblAvailable: <{}> {}".format(tbl, res))
+			self.__debug("tblAvailable: <{}> f{} {}".format(tbl, force, res))
 			return 0
 		else:
-			self.__debug("tblAvailable: <{}> {}".format(tbl, res))
+			self.__debug("tblAvailable: <{}> f{} {}".format(tbl, force, res))
 			return res
 
 	# create table
@@ -273,7 +273,7 @@ class sqlhandle():
 		if force == 1 :
 			self.__exec("DROP TABLE", tbl)
 		res = self.__exec( "CREATE TABLE",  "{} ({})".format(tbl, values))
-		self.__debug("tblCreate: <{}> {}".format(tbl, res))
+		self.__debug("tblCreate: <{}> f{} {}".format(tbl, force, res))
 		return res
 
 	# table drop
