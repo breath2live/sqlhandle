@@ -1,4 +1,4 @@
-from sqlhandle.sqlhandle import sqlhandle
+from sqlhandle import sqlhandle
 import numpy as np
 import pandas as pd
 

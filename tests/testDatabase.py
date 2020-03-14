@@ -1,4 +1,4 @@
-from sqlhandle.sqlhandle import sqlhandle
+from sqlhandle import sqlhandle
 
 def showMe(str):
 	print("[WorkFlow] {}".format(str))

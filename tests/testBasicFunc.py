@@ -1,4 +1,4 @@
-from sqlhandle.sqlhandle import sqlhandle
+from sqlhandle import sqlhandle
 
 # if docker available: docker run -it -e MYSQL_ROOT_PASSWORD=root -p3306:3306 mysql
 
