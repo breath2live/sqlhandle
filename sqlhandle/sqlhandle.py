@@ -339,7 +339,7 @@ class sqlhandle():
 		return res
 
 	# select DEV STAGE
-	def select(self, select, tbl, *cmd):
+	def sqlSelect(self, select, tbl, *cmd):
 		"""
 		Dev. Stage
 		Selects from table
@@ -415,16 +415,63 @@ class sqlhandle():
 		self.__debug("tblInsertArray: <{}> {}".format(tbl, res))
 		return res
 
-	# tblCreateFromArray
-	def tblCreateFromArray(self, tbl, array, force=0, axis=0, data=0):
+	# tblReadToDataFrame
+	def tblReadToDataFrame(self, select, tbl, *cmd, index='', datetime=0):
 		"""
-		Creates a Table form Array with head and dtype, data will be ignored
+		Read to DF
+		"""
+		arr = self.sqlSelect(select, tbl)
+		df = pd.DataFrame(arr[1:], columns=arr[0])
+		if index != '' :
+			if any(var in index for var in df.columns):
+				if datetime == 1:
+					df[index] = pd.DatetimeIndex(df[index])
+				df.set_index(index, inplace=True )
+		return df
+
+	# tblInsertDataFrame
+	def tblInsertDataFrame(self, tbl, df, indexname=''):
+		"""
+		Inserts a DataFrame to an existing Table.
+		Default indexname: "index", IF None in DataFrame
+		"""
+		if indexname != '':
+			df.index.name = indexname
+		elif df.index.name is None:
+			df.index.name = 'index'
+		tmp = df.reset_index()
+		arr = pd.DataFrame([tmp.columns], columns=tmp.columns.to_list()).append(tmp).values
+		return self.tblInsertArray(tbl, arr)
+
+	# tblCreateFromDataFrame
+	def tblCreateFromDataFrame(self, tbl, df, dtype, indexname='', force=0, data=1):
+		"""
+		Creates a Table form DataFrame with given dtype
 		force=0, Just Create (default)
 		force=1, Drop and recreate
 		axis=0, Head and dtype are in Rows (default)
 		axis=1, Head and dtype are in Columns
 		data=0, Ignore Data in Array (default)
 		data=1, Ignore Data in Array
+		"""
+		if indexname != '':
+			df.index.name = indexname
+		elif df.index.name is None:
+			df.index.name = 'index'
+		tmp = df.reset_index()
+		arr = np.append(tmp.columns, np.append(dtype, tmp.values)).reshape(len(tmp)+2, len(dtype))
+		return self.tblCreateFromArray(tbl, arr, force=force, data=data)
+
+	# tblCreateFromArray
+	def tblCreateFromArray(self, tbl, array, force=0, axis=0, data=1):
+		"""
+		Creates a Table form Array with head and dtype
+		force=0, Just Create (default)
+		force=1, Drop and recreate
+		axis=0, Head and dtype are in Rows (default)
+		axis=1, Head and dtype are in Columns
+		data=0, Ignore Data in Array
+		data=1, Ignore Data in Array (default)
 		"""
 		arr = np.array(array[:2])
 		values = ''
@@ -449,6 +496,8 @@ class sqlhandle():
 		self.__debug("tblCreateFromArray: <{}> {}".format(tbl, res))
 		return res
 	# END tblCreateFromArray
+
+
 
 
 	# add more features
