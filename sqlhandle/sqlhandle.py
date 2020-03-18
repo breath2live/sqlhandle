@@ -370,13 +370,13 @@ class sqlhandle():
 		# select Name from Summary union select Name from Customer;
 
 	# INSERT
-	def tblInsert(self, tbl, col, *args):
+	def tblInsert(self, tbl, col, insert='INSERT INTO', *args):
 		"""
 		Inserts row(s) into table
 		e.g. tblInsert("tbl", "ID, UID", "1, 2", "3, 4")
 		"""
 		values = self.__modTubsBrcks(*args)
-		res = self.__exec("INSERT INTO", "{} ({}) VALUES {}".format(tbl, col, values))
+		res = self.__exec(insert, "{} ({}) VALUES {}".format(tbl, col, values))
 		self.__connection.commit()
 		self.__debug("tblInsert: <{}> {}".format(tbl, res))
 		return res
@@ -386,7 +386,7 @@ class sqlhandle():
 		# - 2st values convert to -> ''
 
 	# tblInsertArray
-	def tblInsertArray(self, tbl, array, dtype=0):
+	def tblInsertArray(self, tbl, array, insert='INSERT INTO', dtype=0):
 		"""
 		Inserts headful array to table. Head at index=0
 		dtype=0, No dtype of head included in array (default)
@@ -410,7 +410,7 @@ class sqlhandle():
 			if cnt_y != len(arr)-1:
 				values += ", "
 			cnt_y += 1
-		res = self.__exec("INSERT INTO", "{} ({}) VALUES {}".format(tbl, col, values))
+		res = self.__exec(insert, "{} ({}) VALUES {}".format(tbl, col, values))
 		self.__connection.commit()
 		self.__debug("tblInsertArray: <{}> {}".format(tbl, res))
 		return res
@@ -430,7 +430,7 @@ class sqlhandle():
 		return df
 
 	# tblInsertDataFrame
-	def tblInsertDataFrame(self, tbl, df, indexname=''):
+	def tblInsertDataFrame(self, tbl, df, insert='INSERT INTO', indexname=''):
 		"""
 		Inserts a DataFrame to an existing Table.
 		Default indexname: "index", IF None in DataFrame
@@ -441,7 +441,7 @@ class sqlhandle():
 			df.index.name = 'index'
 		tmp = df.reset_index()
 		arr = pd.DataFrame([tmp.columns], columns=tmp.columns.to_list()).append(tmp).values
-		return self.tblInsertArray(tbl, arr)
+		return self.tblInsertArray(tbl, arr, insert='INSERT INTO')
 
 	# tblCreateFromDataFrame
 	def tblCreateFromDataFrame(self, tbl, df, dtype, indexname='', force=0, data=1):
