@@ -177,25 +177,8 @@ class sqlhandle():
 		e.g. -> ("CREATE DATABASE", "myDb")
 		returns the length of array
 		"""
-		values=''
-		header = []
-		for item in args:
-			values += ' ' + item
-		res = self.__exec(values, '')
-		number_rows = self.__session.rowcount
-		if self.__session.rowcount == 0 :
-			self.__debug("select: <{}> {}".format(tbl, res))
-			return res
-		number_columns = len(self.__session.description)
-		for item in self.__session.description:
-			header.append(item[0])
-		res = [header]
-		for cnt in range(0,number_rows):
-			item_x = []
-			for x in self.__session.fetchone():
-				item_x.append(x)
-			res.append(item_x)
-		self.__debug("execute: {}".format(len(res)))
+		res = self.__exec(' '.join(args), '')
+		self.__debug("execute: {}".format(res))
 		return res
 
 
@@ -355,6 +338,9 @@ class sqlhandle():
 		number_rows = self.__session.rowcount
 		if self.__session.rowcount == 0 :
 			self.__debug("select: <{}> {}".format(tbl, res))
+			for item in self.__session.description:
+				header.append(item[0])
+			res = [header]
 			return res
 		number_columns = len(self.__session.description)
 		for item in self.__session.description:
@@ -421,7 +407,9 @@ class sqlhandle():
 		Read to DF
 		"""
 		arr = self.sqlSelect(select, tbl)
-		df = pd.DataFrame(arr[1:], columns=arr[0])
+		if type(arr) == int : return arr
+		if len(arr) == 1: df = pd.DataFrame([], columns=arr[0])
+		else: df = pd.DataFrame(arr[1:], columns=arr[0])
 		if index != '' :
 			if any(var in index for var in df.columns):
 				if datetime == 1:
@@ -430,7 +418,7 @@ class sqlhandle():
 		return df
 
 	# tblInsertDataFrame
-	def tblInsertDataFrame(self, tbl, df, insert='INSERT INTO', indexname=''):
+	def tblInsertDataFrame(self, tbl, df, insert='INSERT INTO', incl_index=1, indexname=''):
 		"""
 		Inserts a DataFrame to an existing Table.
 		Default indexname: "index", IF None in DataFrame
@@ -439,7 +427,8 @@ class sqlhandle():
 			df.index.name = indexname
 		elif df.index.name is None:
 			df.index.name = 'index'
-		tmp = df.reset_index()
+		if incl_index == 1: tmp = df.reset_index()
+		else: tmp = df
 		arr = pd.DataFrame([tmp.columns], columns=tmp.columns.to_list()).append(tmp).values
 		return self.tblInsertArray(tbl, arr, insert='INSERT INTO')
 
