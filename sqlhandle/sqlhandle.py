@@ -33,8 +33,8 @@ class modArray():
 
 
 class sqlhandle():
-	debugEN = 1
-	debugEN01 = 0
+	debugSqlhandle = 0
+	debugSqlhandle01 = 0
 #	__instance   = None
 	__host       = None
 	__user       = None
@@ -49,22 +49,11 @@ class sqlhandle():
 
 	# Debug method
 	def __debug(self, str):
-		if self.debugEN == 1 :
+		if self.debugSqlhandle == 1 :
 			print("[SQL] {}".format(str))
 	def __debug01(self, str):
-		if self.debugEN01 == 1 :
+		if self.debugSqlhandle01 == 1 :
 			print("[SQL] {}".format(str))
-
-	# set debug
-	def setDebug(self, level=0, value=1):
-		if level == 0:
-			self.debugEN = value
-			return 0
-		elif level == 1:
-			self.debugEN01 = value
-			return 0
-		else:
-			return 1
 
 	# init instance of object
 	def __init__(self, host='localhost', user='root', password='', database=''):
